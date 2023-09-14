@@ -27,7 +27,7 @@ for dx in tadpole_data:
             if mode == 'other':
                 process_tadpole_dict[dx][div][mode] = other_process(process_tadpole_dict[dx][div][mode])
 
-print(process_tadpole_dict.keys())
+print(process_tadpole_dict[dx][div][mode])
 print('|2/2| Imputing and normalizing all features')
 
 # Impute and normalize
@@ -42,7 +42,7 @@ for dx in tadpole_data:
                                                                                                         process_tadpole_dict[dx]['test'])
                     process_tadpole_dict[dx]['train'], process_tadpole_dict[dx]['test']= normalize_per_col(process_tadpole_dict[dx]['train'],
                                                                                                         process_tadpole_dict[dx]['test'])
-                    
+print(process_tadpole_dict[dx][div][mode])                    
 process_tadpole_dict['cn_bl_to_mci']['full']['other'][:,0] = 0
                 
 processed_data_path = 'data/processed'

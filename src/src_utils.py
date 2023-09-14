@@ -22,6 +22,8 @@ from ei import EnsembleIntegration
 from sklearn.metrics import roc_auc_score, precision_recall_curve, \
     matthews_corrcoef, precision_recall_fscore_support, make_scorer
 import sklearn
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import RandomOverSampler
 
 
 
@@ -110,7 +112,7 @@ def_base_predictors = {
         "DT": DecisionTreeClassifier(),
         'GradientBoosting': GradientBoostingClassifier(n_estimators=10),
         "RF": RandomForestClassifier(n_estimators=100),
-        "XGB": XGBClassifier(n_esimators=100), 
+        "XGB": XGBClassifier(n_estimators=100), 
         'KNN': KNeighborsClassifier(n_neighbors=1),
     }
 
@@ -125,6 +127,41 @@ def_meta_models = {
                 "KNN": KNeighborsClassifier(),
                 "XGB": XGBClassifier()
 }
+
+def sample(X, y, strategy, random_state):
+    if strategy is None:
+        X_resampled, y_resampled = X, y
+    elif strategy == "undersampling":  # define sampler
+        sampler = RandomUnderSampler(random_state=random_state)
+    elif strategy == "oversampling":
+        sampler = RandomOverSampler(random_state=random_state)
+    elif strategy == 'hybrid':
+        y_pos = float(sum(y==1))
+        y_total = y.shape[0]
+        if (y_pos/y_total) < 0.5:
+            y_min_count = y_pos
+            y_maj_count = (y_total - y_pos)
+            maj_class = 0
+        else:
+            y_maj_count = y_pos
+            y_min_count = (y_total - y_pos)
+            maj_class = 1
+        rus = RandomUnderSampler(random_state=random_state, 
+                                sampling_strategy=y_min_count/(y_total/2))
+        ros = RandomOverSampler(random_state=random_state,   
+                                sampling_strategy=(y_total/2)/y_maj_count)
+        X_maj, y_maj = rus.fit_resample(X=X, y=y)
+        X_maj = X_maj[y_maj==maj_class]
+        y_maj = y_maj[y_maj==maj_class]
+        X_min, y_min = ros.fit_resample(X=X, y=y)
+        X_min = X_min[y_min!=maj_class]
+        y_min = y_min[y_min!=maj_class]
+        X_resampled = np.concatenate([X_maj, X_min])
+        y_resampled = np.concatenate([y_maj, y_min])
+    
+    if (strategy == "undersampling") or (strategy == "oversampling"):
+        X_resampled, y_resampled = sampler.fit_resample(X=X, y=y)
+    return X_resampled, y_resampled
 
 def EI_model_train_and_save(project_name, base_predictors=def_base_predictors, meta_models=def_meta_models, 
         mode_dict = None, y = None, train = False, single_mode=False, 
@@ -167,19 +204,7 @@ def EI_model_train_and_save(project_name, base_predictors=def_base_predictors, m
         #EI = EnsembleIntegration().load(f"EI.{project_name}")  # load models from disk
 
         #EI.train_meta(meta_models=meta_models)  # train meta classifiers
-    
-        meta_models = {
-            "AdaBoost": AdaBoostClassifier(),
-            "DT": DecisionTreeClassifier(max_depth=5),
-            "GradientBoosting": GradientBoostingClassifier(),
-            "KNN": KNeighborsClassifier(n_neighbors=21),
-            "LR": LogisticRegression(),
-            "NB": GaussianNB(),
-            "MLP": MLPClassifier(),
-            "RF": RandomForestClassifier(),
-            "SVM": LinearSVC(tol=1e-2, max_iter=10000),
-            "XGB": XGBClassifier(use_label_encoder=False, eval_metric='error')
-        }
+
         #EI.save() 
         #EI = EnsembleIntegration().load(f"EI.{project_name}")  # load models from disk
         if meta_training == True:
