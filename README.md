@@ -22,4 +22,7 @@ Splits all data into stratified training and test sets.
 #### tadpole_process_imptn_norm.py
 Imputes and normalizes all data
 
+## Running EI on TADPOLE data
+All details and code necessary to run EI on TADPOLE data are located in the EI_for_TADPOLE jupyter notebook.
+
 
