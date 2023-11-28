@@ -27,7 +27,6 @@ for dx in tadpole_data:
             if mode == 'other':
                 process_tadpole_dict[dx][div][mode] = other_process(process_tadpole_dict[dx][div][mode])
 
-print(process_tadpole_dict[dx][div][mode])
 print('|2/2| Imputing and normalizing all features')
 
 # Impute and normalize
